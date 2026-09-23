@@ -28,10 +28,47 @@ class PaymentIntentStore {
           this.intents.set(item.id, item);
         }
       }
+      if (this.intents.size === 0) {
+        this.preloadDemoIntents();
+      }
     } catch (err) {
       console.warn('[intent-store] Failed to load intents from disk, starting empty:', err);
     }
     this.initialized = true;
+  }
+
+  private preloadDemoIntents(): void {
+    const demoCoffee: PaymentIntent = {
+      id: 'demo-coffee',
+      recipient: '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza',
+      targetMint: USDC_MINT,
+      targetSymbol: 'USDC',
+      targetAmount: 5.0,
+      targetAmountRaw: '5000000',
+      decimals: USDC_DECIMALS,
+      memo: 'Artisan Iced Latte ☕',
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      status: 'created',
+    };
+
+    const demoInvoice: PaymentIntent = {
+      id: 'demo-invoice',
+      recipient: '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza',
+      targetMint: USDC_MINT,
+      targetSymbol: 'USDC',
+      targetAmount: 25.0,
+      targetAmountRaw: '25000000',
+      decimals: USDC_DECIMALS,
+      memo: 'Web3 Dev Consultation #104 ⚡',
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      status: 'created',
+    };
+
+    this.intents.set(demoCoffee.id, demoCoffee);
+    this.intents.set(demoInvoice.id, demoInvoice);
+    this.persist();
   }
 
   private persist(): void {
