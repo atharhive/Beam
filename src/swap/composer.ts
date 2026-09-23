@@ -13,7 +13,7 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token';
 import { getSolanaConnection, getLatestBlockhash, getAssociatedTokenAddress } from '../core/solana.js';
-import { USDC_MINT, USDC_DECIMALS, WSOL_MINT } from '../config.js';
+import { USDC_MINT, USDC_DECIMALS, WSOL_MINT, SOLANA_NETWORK } from '../config.js';
 import { getTokenByMint } from '../core/tokens.js';
 import type { PaymentIntent } from '../intent/types.js';
 
@@ -58,12 +58,23 @@ export async function composeAtomicPaymentTransaction(
   let payerAta: PublicKey | null = null;
   let recipientAta: PublicKey | null = null;
 
+  const isDevnet = SOLANA_NETWORK === 'devnet';
+  const isDirectTokenSettlement = !params.swapTransactionBase64 && params.inputMint === params.intent.targetMint;
   const isPayingInNativeSol =
-    !params.swapTransactionBase64 && (params.inputMint === WSOL_MINT || !params.inputMint);
+    !params.swapTransactionBase64 &&
+    (params.inputMint === WSOL_MINT || !params.inputMint || (isDevnet && !isDirectTokenSettlement));
 
   if (isPayingInNativeSol) {
-    // Direct SOL transfer (e.g. on Devnet or direct SOL settlement):
-    const lamportsToSend = BigInt(params.requiredInputRaw || '10000000');
+    // Direct SOL transfer (e.g. native SOL, or simulated token swap settlement on Devnet):
+    let lamportsToSend: bigint;
+    if (params.inputMint === WSOL_MINT || !params.inputMint) {
+      lamportsToSend = BigInt(params.requiredInputRaw || '10000000');
+    } else {
+      // Calculate equivalent SOL for target USDC amount at reference rate ($155/SOL + 1% buffer)
+      const targetUsdc = Number(params.intent.targetAmount);
+      lamportsToSend = BigInt(Math.ceil((targetUsdc / 155.0) * 1e9 * 1.01));
+    }
+
     settlementInstructions.push(
       SystemProgram.transfer({
         fromPubkey: payerPubkey,
@@ -108,16 +119,21 @@ export async function composeAtomicPaymentTransaction(
     );
   }
 
-  // 3. Optional Memo instruction
-  if (params.intent.memo) {
-    settlementInstructions.push(
-      new TransactionInstruction({
-        keys: [{ pubkey: payerPubkey, isSigner: true, isWritable: true }],
-        programId: MEMO_PROGRAM_ID,
-        data: Buffer.from(`Beam: ${params.intent.id} - ${params.intent.memo}`, 'utf-8'),
-      })
-    );
-  }
+  // 3. Memo instruction describing transaction
+  const inputMeta = params.inputMint ? getTokenByMint(params.inputMint) : null;
+  const memoText = params.intent.memo
+    ? `Beam: ${params.intent.id} - ${params.intent.memo}`
+    : isDevnet && params.inputMint && params.inputMint !== WSOL_MINT && !isDirectTokenSettlement
+      ? `Beam [Devnet]: Pay with ${inputMeta?.symbol || 'Token'} -> Settle ${params.intent.targetAmount} USDC`
+      : `Beam: ${params.intent.id} payment settlement`;
+
+  settlementInstructions.push(
+    new TransactionInstruction({
+      keys: [{ pubkey: payerPubkey, isSigner: true, isWritable: true }],
+      programId: MEMO_PROGRAM_ID,
+      data: Buffer.from(memoText, 'utf-8'),
+    })
+  );
 
   const latestBlockhash = await getLatestBlockhash();
 

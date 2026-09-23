@@ -44,7 +44,10 @@ export function getVybeDataApiKey(): string {
 }
 
 // Token Constants
-export const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const DEVNET_USDC_MINT = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
+export const MAINNET_USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+export const USDC_MINT = SOLANA_NETWORK === 'devnet' ? DEVNET_USDC_MINT : MAINNET_USDC_MINT;
 export const USDC_DECIMALS = 6;
 export const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 export const SOL_DECIMALS = 9;

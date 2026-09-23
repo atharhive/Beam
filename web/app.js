@@ -485,8 +485,29 @@ function showPaidReceipt(signature, solscanUrl) {
   updatePayButtonState();
 }
 
+async function initTokens() {
+  try {
+    const res = await fetch('/api/tokens');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.tokens && data.tokens.length > 0) {
+      paymentTokenSelect.innerHTML = '';
+      data.tokens.forEach((t) => {
+        const opt = document.createElement('option');
+        opt.value = t.mint;
+        opt.textContent = `${t.symbol} — ${t.name}`;
+        paymentTokenSelect.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to load token list:', err);
+  }
+}
+
 // Initial Route Check
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  await initTokens();
+
   const pathParts = window.location.pathname.split('/');
   const payIndex = pathParts.indexOf('pay');
   const urlParams = new URLSearchParams(window.location.search);
