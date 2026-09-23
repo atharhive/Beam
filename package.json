@@ -9,7 +9,8 @@
     "start": "bun src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "postinstall": "rm -rf node_modules/bigint-buffer/build 2>/dev/null || true"
   },
   "keywords": [
     "solana",
