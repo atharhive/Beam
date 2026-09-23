@@ -44,6 +44,25 @@ export async function verifyPaymentOnChain(
     };
   }
 
+  // Demo Mode verification handler (Zero real funds needed)
+  if (signature.startsWith('demo-') || signature.startsWith('sim-')) {
+    intentStore.updateStatus(intentId, 'paid', {
+      payerWallet: payerWallet || '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza',
+      paymentTxSignature: signature,
+      paidAmountRaw: intent.targetAmountRaw,
+    });
+    return {
+      verified: true,
+      status: 'paid',
+      txSignature: signature,
+      solscanUrl: `https://solscan.io/tx/${signature}`,
+      recipient: intent.recipient,
+      targetAmountRaw: intent.targetAmountRaw,
+      receivedAmountRaw: intent.targetAmountRaw,
+      payerWallet: payerWallet || '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza',
+    };
+  }
+
   const connection = getSolanaConnection();
 
   // 1. Check signature status

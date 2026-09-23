@@ -19,11 +19,19 @@
         <span class="badge-network">Solana</span>
       </div>
       <div class="nav-actions">
+        <div class="demo-toggle-wrap" title="Toggle between zero-cost Demo Mode and Live Mainnet">
+          <label class="switch">
+            <input type="checkbox" id="demoModeToggle" checked>
+            <span class="slider"></span>
+          </label>
+          <span id="demoModeLabel" class="demo-tag active">🧪 Demo Mode</span>
+        </div>
         <button id="navCreateBtn" class="nav-btn active">Create Link</button>
         <button id="navCheckoutBtn" class="nav-btn">Payer Checkout</button>
+        <button id="demoWalletBtn" class="btn-demo-wallet" title="Instant test wallet with 5.4 SOL (Zero cost)">🧪 Demo Wallet</button>
         <button id="connectWalletBtn" class="btn-wallet">
           <span class="wallet-dot"></span>
-          <span id="walletLabel">Connect Wallet</span>
+          <span id="walletLabel">Connect Phantom</span>
         </button>
       </div>
     </header>
@@ -99,6 +107,11 @@
           
           <!-- Order Summary Card -->
           <div class="card checkout-card">
+            <div class="demo-quick-picks">
+              <span class="quick-label">⚡ Test Presets:</span>
+              <button id="loadCoffeeDemoBtn" class="pill-btn active" type="button">☕ $5.00 Coffee</button>
+              <button id="loadInvoiceDemoBtn" class="pill-btn" type="button">💻 $25.00 Invoice</button>
+            </div>
             <div class="checkout-header">
               <div class="order-badge">Payment Request</div>
               <div id="statusBadge" class="status-pill status-ready">Awaiting Payment</div>

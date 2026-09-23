@@ -84,14 +84,18 @@ swapRouter.post('/build', async (req: Request, res: Response) => {
     let swapTxBase64: string | undefined;
 
     // 2. If swap is needed, ask aggregator to build DEX swap transaction
-    if (!paymentQuote.isDirectTransfer && paymentQuote.dexQuote) {
-      const dexBuild = await buildSwapTransaction({
-        userPublicKey: String(payerPublicKey),
-        quote: paymentQuote.dexQuote,
-        wrapAndUnwrapSol: true,
-        priorityFeeLamports: priorityFeeLamports ? Number(priorityFeeLamports) : 10000,
-      });
-      swapTxBase64 = dexBuild.swapTransaction;
+    if (!paymentQuote.isDirectTransfer && paymentQuote.dexQuote && paymentQuote.dexQuote.router !== 'simulated-dex') {
+      try {
+        const dexBuild = await buildSwapTransaction({
+          userPublicKey: String(payerPublicKey),
+          quote: paymentQuote.dexQuote,
+          wrapAndUnwrapSol: true,
+          priorityFeeLamports: priorityFeeLamports ? Number(priorityFeeLamports) : 10000,
+        });
+        swapTxBase64 = dexBuild.swapTransaction;
+      } catch (dexErr) {
+        console.warn('[swap/build] DEX aggregator build unavailable, using direct transaction fallback:', dexErr);
+      }
     }
 
     // 3. Atomically compose the DEX swap with the recipient settlement
