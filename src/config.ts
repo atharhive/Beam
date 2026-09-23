@@ -13,9 +13,14 @@ export const PORT = Number(process.env.PORT || 3000);
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // Solana Network & RPC Configuration
+export const SOLANA_NETWORK = (process.env.SOLANA_NETWORK || 'devnet').trim().toLowerCase();
+
 export function getSolanaRpcUrl(): string {
   if (process.env.SOLANA_RPC_URL?.trim()) {
     return process.env.SOLANA_RPC_URL.trim();
+  }
+  if (SOLANA_NETWORK === 'devnet') {
+    return 'https://api.devnet.solana.com';
   }
   if (process.env.HELIUS_API_KEY?.trim()) {
     return `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY.trim()}`;

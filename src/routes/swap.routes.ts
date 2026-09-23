@@ -102,6 +102,8 @@ swapRouter.post('/build', async (req: Request, res: Response) => {
     const composed = await composeAtomicPaymentTransaction({
       payerPublicKey: String(payerPublicKey),
       intent,
+      inputMint: String(inputMint),
+      requiredInputRaw: paymentQuote.requiredInputRaw,
       swapTransactionBase64: swapTxBase64,
     });
 

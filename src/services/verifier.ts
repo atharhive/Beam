@@ -1,6 +1,7 @@
 import { PublicKey } from '@solana/web3.js';
 import { getSolanaConnection, getAssociatedTokenAddress } from '../core/solana.js';
 import { intentStore } from '../intent/store.js';
+import { SOLANA_NETWORK } from '../config.js';
 import type { PaymentIntent } from '../intent/types.js';
 
 export interface VerificationResult {
@@ -28,7 +29,8 @@ export async function verifyPaymentOnChain(
     throw new Error(`Payment intent not found: ${intentId}`);
   }
 
-  const solscanUrl = `https://solscan.io/tx/${signature}`;
+  const clusterParam = SOLANA_NETWORK === 'devnet' ? '?cluster=devnet' : '';
+  const solscanUrl = `https://solscan.io/tx/${signature}${clusterParam}`;
 
   // If already paid with same signature
   if (intent.status === 'paid' && intent.paymentTxSignature === signature) {
@@ -130,11 +132,29 @@ export async function verifyPaymentOnChain(
     detectedPayer = typeof feePayer === 'string' ? feePayer : feePayer.pubkey.toBase58();
   }
 
-  if (deltaReceived >= targetAmountRaw) {
+  // Check native SOL transfer delta if token balance delta is 0
+  let solDeltaReceived = 0n;
+  const recipientIndex = parsedTx.transaction.message.accountKeys.findIndex((k: any) => {
+    const keyStr = typeof k === 'string' ? k : k.pubkey?.toBase58 ? k.pubkey.toBase58() : '';
+    return keyStr === intent.recipient;
+  });
+
+  if (recipientIndex !== -1 && parsedTx.meta.postBalances && parsedTx.meta.preBalances) {
+    const preSol = BigInt(parsedTx.meta.preBalances[recipientIndex] || 0);
+    const postSol = BigInt(parsedTx.meta.postBalances[recipientIndex] || 0);
+    if (postSol > preSol) {
+      solDeltaReceived = postSol - preSol;
+    }
+  }
+
+  const isConfirmedPaid = deltaReceived >= targetAmountRaw || solDeltaReceived > 0n;
+
+  if (isConfirmedPaid) {
+    const finalPaidRaw = deltaReceived > 0n ? deltaReceived.toString() : solDeltaReceived.toString();
     intentStore.updateStatus(intentId, 'paid', {
       payerWallet: detectedPayer,
       paymentTxSignature: signature,
-      paidAmountRaw: deltaReceived.toString(),
+      paidAmountRaw: finalPaidRaw,
     });
 
     return {
@@ -144,7 +164,7 @@ export async function verifyPaymentOnChain(
       solscanUrl,
       recipient: intent.recipient,
       targetAmountRaw: intent.targetAmountRaw,
-      receivedAmountRaw: deltaReceived.toString(),
+      receivedAmountRaw: finalPaidRaw,
       payerWallet: detectedPayer,
     };
   }

@@ -350,9 +350,12 @@ payAndSettleBtn.addEventListener('click', async () => {
 
     const binaryTx = Uint8Array.from(atob(buildData.transaction), (c) => c.charCodeAt(0));
 
-    const { signature } = await provider.signAndSendTransaction({
-      serialize: () => binaryTx,
-    });
+    let txToSign = { serialize: () => binaryTx };
+    if (window.solanaWeb3 && window.solanaWeb3.VersionedTransaction) {
+      txToSign = window.solanaWeb3.VersionedTransaction.deserialize(binaryTx);
+    }
+
+    const { signature } = await provider.signAndSendTransaction(txToSign);
 
     payBtnText.textContent = 'Confirming on Solana...';
 
@@ -369,10 +372,10 @@ payAndSettleBtn.addEventListener('click', async () => {
     const verifyData = await verifyRes.json();
     if (verifyData.verified) {
       updateStatusPill('paid');
-      showPaidReceipt(signature);
+      showPaidReceipt(signature, verifyData.solscanUrl);
     } else {
       alert(`Payment submitted! Transaction signature: ${signature}. Awaiting final confirmation.`);
-      showPaidReceipt(signature);
+      showPaidReceipt(signature, verifyData.solscanUrl);
     }
   } catch (err) {
     console.error('Payment error:', err);
@@ -381,9 +384,9 @@ payAndSettleBtn.addEventListener('click', async () => {
   }
 });
 
-function showPaidReceipt(signature) {
+function showPaidReceipt(signature, solscanUrl) {
   receiptContainer.classList.remove('hidden');
-  solscanLink.href = `https://solscan.io/tx/${signature}`;
+  solscanLink.href = solscanUrl || `https://solscan.io/tx/${signature}?cluster=devnet`;
   updatePayButtonState();
 }
 

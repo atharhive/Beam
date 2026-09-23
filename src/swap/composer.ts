@@ -3,6 +3,7 @@ import {
   VersionedTransaction,
   TransactionMessage,
   TransactionInstruction,
+  SystemProgram,
   type AddressLookupTableAccount,
 } from '@solana/web3.js';
 import {
@@ -12,13 +13,15 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from '@solana/spl-token';
 import { getSolanaConnection, getLatestBlockhash, getAssociatedTokenAddress } from '../core/solana.js';
-import { USDC_MINT, USDC_DECIMALS } from '../config.js';
+import { USDC_MINT, USDC_DECIMALS, WSOL_MINT } from '../config.js';
 import { getTokenByMint } from '../core/tokens.js';
 import type { PaymentIntent } from '../intent/types.js';
 
 export interface ComposePaymentTxParams {
   payerPublicKey: string;
   intent: PaymentIntent;
+  inputMint?: string;
+  requiredInputRaw?: string;
   swapTransactionBase64?: string; // If swap was performed; omitted if direct payment
 }
 
@@ -50,43 +53,60 @@ export async function composeAtomicPaymentTransaction(
   };
   const decimals = tokenMeta.decimals;
 
-  // Determine token program (standard SPL or Token-2022)
-  const mintAccountInfo = await connection.getAccountInfo(targetMintPubkey);
-  const tokenProgramId = mintAccountInfo?.owner.equals(TOKEN_2022_PROGRAM_ID)
-    ? TOKEN_2022_PROGRAM_ID
-    : TOKEN_PROGRAM_ID;
-
-  // Derive Associated Token Accounts
-  const payerAta = getAssociatedTokenAddress(targetMintPubkey, payerPubkey, false, tokenProgramId);
-  const recipientAta = getAssociatedTokenAddress(targetMintPubkey, recipientPubkey, true, tokenProgramId);
-
-  // Instructions to be executed after the swap
+  // Instructions to be executed
   const settlementInstructions: TransactionInstruction[] = [];
+  let payerAta: PublicKey | null = null;
+  let recipientAta: PublicKey | null = null;
 
-  // 1. Ensure recipient's ATA exists (idempotent, safe if already initialized)
-  settlementInstructions.push(
-    createAssociatedTokenAccountIdempotentInstruction(
-      payerPubkey,
-      recipientAta,
-      recipientPubkey,
-      targetMintPubkey,
-      tokenProgramId
-    )
-  );
+  const isPayingInNativeSol =
+    !params.swapTransactionBase64 && (params.inputMint === WSOL_MINT || !params.inputMint);
 
-  // 2. Transfer exact USDC from payer's account to recipient
-  settlementInstructions.push(
-    createTransferCheckedInstruction(
-      payerAta,
-      targetMintPubkey,
-      recipientAta,
-      payerPubkey,
-      targetAmountRaw,
-      decimals,
-      [],
-      tokenProgramId
-    )
-  );
+  if (isPayingInNativeSol) {
+    // Direct SOL transfer (e.g. on Devnet or direct SOL settlement):
+    const lamportsToSend = BigInt(params.requiredInputRaw || '10000000');
+    settlementInstructions.push(
+      SystemProgram.transfer({
+        fromPubkey: payerPubkey,
+        toPubkey: recipientPubkey,
+        lamports: lamportsToSend,
+      })
+    );
+  } else {
+    // Determine token program (standard SPL or Token-2022)
+    const mintAccountInfo = await connection.getAccountInfo(targetMintPubkey);
+    const tokenProgramId = mintAccountInfo?.owner.equals(TOKEN_2022_PROGRAM_ID)
+      ? TOKEN_2022_PROGRAM_ID
+      : TOKEN_PROGRAM_ID;
+
+    // Derive Associated Token Accounts (allowOwnerOffCurve = true for PDA/smart wallets)
+    payerAta = getAssociatedTokenAddress(targetMintPubkey, payerPubkey, true, tokenProgramId);
+    recipientAta = getAssociatedTokenAddress(targetMintPubkey, recipientPubkey, true, tokenProgramId);
+
+    // 1. Ensure recipient's ATA exists (idempotent, safe if already initialized)
+    settlementInstructions.push(
+      createAssociatedTokenAccountIdempotentInstruction(
+        payerPubkey,
+        recipientAta,
+        recipientPubkey,
+        targetMintPubkey,
+        tokenProgramId
+      )
+    );
+
+    // 2. Transfer exact USDC from payer's account to recipient
+    settlementInstructions.push(
+      createTransferCheckedInstruction(
+        payerAta,
+        targetMintPubkey,
+        recipientAta,
+        payerPubkey,
+        targetAmountRaw,
+        decimals,
+        [],
+        tokenProgramId
+      )
+    );
+  }
 
   // 3. Optional Memo instruction
   if (params.intent.memo) {
@@ -116,8 +136,8 @@ export async function composeAtomicPaymentTransaction(
       transactionBase64: serialized,
       recentBlockhash: latestBlockhash.blockhash,
       lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-      recipientAta: recipientAta.toBase58(),
-      payerAta: payerAta.toBase58(),
+      recipientAta: recipientAta ? recipientAta.toBase58() : recipientPubkey.toBase58(),
+      payerAta: payerAta ? payerAta.toBase58() : payerPubkey.toBase58(),
       amountTransferredRaw: targetAmountRaw.toString(),
     };
   }
@@ -162,8 +182,8 @@ export async function composeAtomicPaymentTransaction(
     transactionBase64: serialized,
     recentBlockhash: latestBlockhash.blockhash,
     lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-    recipientAta: recipientAta.toBase58(),
-    payerAta: payerAta.toBase58(),
+    recipientAta: recipientAta ? recipientAta.toBase58() : recipientPubkey.toBase58(),
+    payerAta: payerAta ? payerAta.toBase58() : payerPubkey.toBase58(),
     amountTransferredRaw: targetAmountRaw.toString(),
   };
 }

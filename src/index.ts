@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PORT, SOLANA_RPC_URL, VYBE_API_BASE } from './config.js';
+import { PORT, SOLANA_RPC_URL, SOLANA_NETWORK, VYBE_API_BASE } from './config.js';
 import { intentRouter } from './routes/intent.routes.js';
 import { swapRouter } from './routes/swap.routes.js';
 import { tokenRouter } from './routes/token.routes.js';
@@ -40,7 +40,8 @@ app.get('/api/health', (_req, res) => {
     status: 'ok',
     app: 'Beam',
     version: '1.0.0',
-    solanaRpc: SOLANA_RPC_URL.includes('helius') ? 'helius' : 'mainnet-public',
+    network: SOLANA_NETWORK,
+    solanaRpc: SOLANA_RPC_URL,
     vybeBase: VYBE_API_BASE,
   });
 });
