@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beam ⚡ — Pay with anything. Settle in USDC.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Navbar -->
+    <header class="navbar">
+      <div class="brand">
+        <span class="brand-logo">⚡</span>
+        <span class="brand-name">Beam</span>
+        <span class="badge-network">Solana</span>
+      </div>
+      <div class="nav-actions">
+        <button id="navCreateBtn" class="nav-btn active">Create Link</button>
+        <button id="navCheckoutBtn" class="nav-btn">Payer Checkout</button>
+        <button id="connectWalletBtn" class="btn-wallet">
+          <span class="wallet-dot"></span>
+          <span id="walletLabel">Connect Wallet</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+      
+      <!-- VIEW 1: Merchant / Create Payment Link -->
+      <section id="createView" class="view-panel">
+        <div class="hero-title">
+          <h1>Request Payment</h1>
+          <p>Get settled in exact USDC. Payers can use any Solana token.</p>
+        </div>
+
+        <div class="card form-card">
+          <div class="form-group">
+            <label for="recipientWallet">Recipient Solana Address</label>
+            <div class="input-with-action">
+              <input type="text" id="recipientWallet" placeholder="Enter Solana public key (e.g. 7Tar...)" spellcheck="false">
+              <button id="useConnectedWalletBtn" class="input-action-btn" type="button">Use Connected</button>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="targetAmount">Target Amount (USDC)</label>
+              <div class="input-currency">
+                <span class="currency-symbol">$</span>
+                <input type="number" id="targetAmount" placeholder="10.00" min="0.01" step="0.01">
+                <span class="currency-tag">USDC</span>
+              </div>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="expirySelect">Link Expiration</label>
+              <select id="expirySelect">
+                <option value="15">15 minutes</option>
+                <option value="60" selected>1 hour</option>
+                <option value="1440">24 hours</option>
+                <option value="10080">7 days</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="memo">Order Note / Memo (Optional)</label>
+            <input type="text" id="memo" placeholder="e.g. Invoice #1042, Website design" maxlength="100">
+          </div>
+
+          <button id="generateLinkBtn" class="btn-primary btn-large">
+            <span>Create Beam Payment Link</span>
+            <span class="btn-arrow">→</span>
+          </button>
+
+          <!-- Generated Link Card -->
+          <div id="generatedLinkContainer" class="generated-link-card hidden">
+            <div class="success-banner">
+              <span class="check-icon">✓</span>
+              <span>Payment link created! Share this with your payer:</span>
+            </div>
+            <div class="link-box">
+              <input type="text" id="shareableLinkInput" readonly>
+              <button id="copyLinkBtn" class="btn-copy">Copy</button>
+              <button id="openLinkBtn" class="btn-secondary">Open</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: Payer Checkout View -->
+      <section id="checkoutView" class="view-panel hidden">
+        <div class="checkout-grid">
+          
+          <!-- Order Summary Card -->
+          <div class="card checkout-card">
+            <div class="checkout-header">
+              <div class="order-badge">Payment Request</div>
+              <div id="statusBadge" class="status-pill status-ready">Awaiting Payment</div>
+            </div>
+
+            <div class="amount-hero">
+              <span class="amount-currency">$</span>
+              <span id="checkoutAmountDisplay" class="amount-number">0.00</span>
+              <span class="amount-token">USDC</span>
+            </div>
+
+            <div id="checkoutMemoDisplay" class="checkout-memo hidden"></div>
+
+            <div class="intent-meta-list">
+              <div class="meta-row">
+                <span class="meta-label">Recipient</span>
+                <span id="checkoutRecipientDisplay" class="meta-value font-mono">Loading...</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Expires in</span>
+                <span id="checkoutExpiryDisplay" class="meta-value timer-text">—</span>
+              </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Payer Token Selection -->
+            <div class="payment-selection">
+              <label class="section-label">Pay with your choice of token:</label>
+              <div class="token-select-group">
+                <select id="paymentTokenSelect" class="token-select">
+                  <option value="So11111111111111111111111111111111111111112">SOL — Solana</option>
+                  <option value="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v">USDC — USD Coin</option>
+                  <option value="Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB">USDT — Tether</option>
+                  <option value="DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263">BONK — Bonk</option>
+                  <option value="JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN">JUP — Jupiter</option>
+                  <option value="4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R">RAY — Raydium</option>
+                </select>
+                <div id="payerBalanceDisplay" class="payer-balance">Balance: —</div>
+              </div>
+            </div>
+
+            <!-- Real-time Route & Quote Details -->
+            <div id="quoteSummaryCard" class="quote-summary-card">
+              <div class="quote-row highlight-row">
+                <span>You will spend:</span>
+                <span id="quoteRequiredInput" class="quote-val font-mono">Calculating quote...</span>
+              </div>
+              <div class="quote-row">
+                <span>Recipient receives:</span>
+                <span id="quoteTargetOutput" class="quote-val font-mono">Exactly 0.00 USDC</span>
+              </div>
+              <div class="quote-row">
+                <span>Atomic route:</span>
+                <span id="quoteRouteDesc" class="quote-val">DEX Swap → Exact Recipient Transfer</span>
+              </div>
+              <div class="quote-row">
+                <span>Slippage buffer:</span>
+                <span class="quote-val">1.0% (surplus stays in your wallet)</span>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button id="payAndSettleBtn" class="btn-primary btn-large btn-pay">
+              <span id="payBtnText">Connect Wallet to Pay</span>
+            </button>
+
+            <!-- Verification / Receipt Display -->
+            <div id="receiptContainer" class="receipt-card hidden">
+              <div class="receipt-header">
+                <span class="receipt-check">✓</span>
+                <h3>Payment Verified On-Chain!</h3>
+              </div>
+              <p class="receipt-sub">The recipient received the exact requested USDC settlement.</p>
+              <div class="receipt-links">
+                <a id="solscanLink" href="#" target="_blank" rel="noopener" class="btn-solscan">
+                  View Solscan Receipt ↗
+                </a>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>Beam ⚡ Non-Custodial Solana Settlement Protocol</div>
+      <div>Built with Bun, Express & @solana/web3.js</div>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
