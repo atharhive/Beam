@@ -4,7 +4,6 @@ let connectedWallet = null;
 let currentIntent = null;
 let countdownTimer = null;
 let currentQuote = null;
-let isDemoMode = true;
 
 // DOM Elements
 const navCreateBtn = document.getElementById('navCreateBtn');
@@ -12,15 +11,8 @@ const navCheckoutBtn = document.getElementById('navCheckoutBtn');
 const createView = document.getElementById('createView');
 const checkoutView = document.getElementById('checkoutView');
 
-const demoModeToggle = document.getElementById('demoModeToggle');
-const demoModeLabel = document.getElementById('demoModeLabel');
-const demoWalletBtn = document.getElementById('demoWalletBtn');
 const connectWalletBtn = document.getElementById('connectWalletBtn');
 const walletLabel = document.getElementById('walletLabel');
-
-// Preset Buttons
-const loadCoffeeDemoBtn = document.getElementById('loadCoffeeDemoBtn');
-const loadInvoiceDemoBtn = document.getElementById('loadInvoiceDemoBtn');
 
 // Create View Elements
 const recipientWalletInput = document.getElementById('recipientWallet');
@@ -49,21 +41,6 @@ const payBtnText = document.getElementById('payBtnText');
 const receiptContainer = document.getElementById('receiptContainer');
 const solscanLink = document.getElementById('solscanLink');
 
-// --- Demo Mode Switcher ---
-if (demoModeToggle) {
-  demoModeToggle.addEventListener('change', () => {
-    isDemoMode = demoModeToggle.checked;
-    if (isDemoMode) {
-      demoModeLabel.textContent = '🧪 Demo Mode';
-      demoModeLabel.style.color = '#38bdf8';
-    } else {
-      demoModeLabel.textContent = '⚡ Live Mainnet';
-      demoModeLabel.style.color = '#14F195';
-    }
-    updatePayButtonState();
-  });
-}
-
 // --- Navigation ---
 function switchView(view) {
   if (view === 'create') {
@@ -83,21 +60,16 @@ navCreateBtn.addEventListener('click', () => switchView('create'));
 navCheckoutBtn.addEventListener('click', () => {
   switchView('checkout');
   if (!currentIntent) {
-    loadPaymentIntent('demo-coffee');
+    const defaultId = new URLSearchParams(window.location.search).get('id');
+    if (defaultId) loadPaymentIntent(defaultId);
   }
 });
 
-// --- Wallet Connection (Real & Demo) ---
+// --- Wallet Connection (Phantom / Solflare) ---
 async function connectWallet() {
   const provider = window.solana || window.phantom?.solana;
   if (!provider) {
-    // If no extension, offer demo wallet
-    const useDemo = confirm(
-      'No Solana wallet extension detected (Phantom/Solflare).\n\nWould you like to connect an instant simulated Demo Wallet with 5.4 SOL?'
-    );
-    if (useDemo) {
-      connectDemoWallet();
-    }
+    alert('No Solana wallet detected. Please install Phantom or Solflare browser extension.');
     return;
   }
 
@@ -118,28 +90,10 @@ async function connectWallet() {
   }
 }
 
-function connectDemoWallet() {
-  connectedWallet = '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza';
-  walletLabel.textContent = '7Tar...Reza (Demo)';
-  connectWalletBtn.classList.add('wallet-connected');
-  payerBalanceDisplay.textContent = 'Balance: 5.4200 SOL (Simulated)';
-  updatePayButtonState();
-  if (currentIntent) {
-    fetchQuote();
-  }
-}
-
-if (demoWalletBtn) {
-  demoWalletBtn.addEventListener('click', connectDemoWallet);
-}
 connectWalletBtn.addEventListener('click', connectWallet);
 
 async function refreshWalletBalances() {
   if (!connectedWallet) return;
-  if (connectedWallet === '7Tar8QZTrRPwoGY5Ke9Vfwf6CmpBfekrNofERxgReza') {
-    payerBalanceDisplay.textContent = 'Balance: 5.4200 SOL (Demo)';
-    return;
-  }
 
   try {
     const res = await fetch(`/api/tokens/wallet/${connectedWallet}/balances`);
@@ -156,23 +110,6 @@ async function refreshWalletBalances() {
   } catch (err) {
     console.warn('Failed to load wallet balances:', err);
   }
-}
-
-// --- Quick Presets ---
-if (loadCoffeeDemoBtn) {
-  loadCoffeeDemoBtn.addEventListener('click', () => {
-    loadCoffeeDemoBtn.classList.add('active');
-    if (loadInvoiceDemoBtn) loadInvoiceDemoBtn.classList.remove('active');
-    loadPaymentIntent('demo-coffee');
-  });
-}
-
-if (loadInvoiceDemoBtn) {
-  loadInvoiceDemoBtn.addEventListener('click', () => {
-    loadInvoiceDemoBtn.classList.add('active');
-    if (loadCoffeeDemoBtn) loadCoffeeDemoBtn.classList.remove('active');
-    loadPaymentIntent('demo-invoice');
-  });
 }
 
 // --- Create Payment Link Flow ---
@@ -360,7 +297,7 @@ async function fetchQuote() {
 
 function updatePayButtonState() {
   if (!connectedWallet) {
-    payBtnText.textContent = isDemoMode ? 'Connect or Use Demo Wallet' : 'Connect Wallet to Pay';
+    payBtnText.textContent = 'Connect Wallet to Pay';
     payAndSettleBtn.disabled = false;
   } else if (currentIntent?.status === 'paid') {
     payBtnText.textContent = 'Payment Completed ✓';
@@ -369,9 +306,7 @@ function updatePayButtonState() {
     payBtnText.textContent = 'Payment Link Expired';
     payAndSettleBtn.disabled = true;
   } else {
-    payBtnText.textContent = isDemoMode
-      ? `Simulate Pay & Settle ${currentIntent ? currentIntent.targetAmount.toFixed(2) : ''} USDC (Zero Cost)`
-      : `Pay & Settle ${currentIntent ? currentIntent.targetAmount.toFixed(2) : ''} USDC`;
+    payBtnText.textContent = `Pay & Settle ${currentIntent ? currentIntent.targetAmount.toFixed(2) : ''} USDC`;
     payAndSettleBtn.disabled = false;
   }
 }
@@ -379,47 +314,18 @@ function updatePayButtonState() {
 // Pay and Settle Button Handler
 payAndSettleBtn.addEventListener('click', async () => {
   if (!connectedWallet) {
-    connectDemoWallet();
+    await connectWallet();
     return;
   }
   if (!currentIntent) return;
 
   payAndSettleBtn.disabled = true;
+  payBtnText.textContent = 'Building atomic transaction...';
 
   try {
     const inputMint = paymentTokenSelect.value;
 
-    // --- DEMO MODE SIMULATION FLOW (ZERO COST, ZERO TOKENS SPENT) ---
-    if (isDemoMode) {
-      payBtnText.textContent = '⚡ Building atomic v0 transaction...';
-      await new Promise((r) => setTimeout(r, 600));
-
-      payBtnText.textContent = '🧪 Simulating on Solana runtime...';
-      await new Promise((r) => setTimeout(r, 800));
-
-      payBtnText.textContent = 'Confirming settlement with RPC...';
-      await new Promise((r) => setTimeout(r, 600));
-
-      const mockSignature = `demo-sig-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-      const verifyRes = await fetch(`/api/intents/${currentIntent.id}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          signature: mockSignature,
-          payerWallet: connectedWallet,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      updateStatusPill('paid');
-      showPaidReceipt(mockSignature);
-      return;
-    }
-
-    // --- LIVE MAINNET REAL SIGNING FLOW ---
-    payBtnText.textContent = 'Building atomic transaction...';
-
+    // 1. Build atomic transaction from backend
     const buildRes = await fetch('/api/swap/build', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -436,8 +342,9 @@ payAndSettleBtn.addEventListener('click', async () => {
     }
 
     const buildData = await buildRes.json();
-    payBtnText.textContent = 'Please approve in Phantom...';
+    payBtnText.textContent = 'Please approve in wallet...';
 
+    // 2. Client-side signing with Solana Wallet (Phantom / Solflare)
     const provider = window.solana || window.phantom?.solana;
     if (!provider) throw new Error('No Solana wallet detected');
 
@@ -449,6 +356,7 @@ payAndSettleBtn.addEventListener('click', async () => {
 
     payBtnText.textContent = 'Confirming on Solana...';
 
+    // 3. Verify on-chain settlement
     const verifyRes = await fetch(`/api/intents/${currentIntent.id}/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -463,7 +371,7 @@ payAndSettleBtn.addEventListener('click', async () => {
       updateStatusPill('paid');
       showPaidReceipt(signature);
     } else {
-      alert(`Payment submitted! Transaction signature: ${signature}. Awaiting final indexation.`);
+      alert(`Payment submitted! Transaction signature: ${signature}. Awaiting final confirmation.`);
       showPaidReceipt(signature);
     }
   } catch (err) {
@@ -475,9 +383,7 @@ payAndSettleBtn.addEventListener('click', async () => {
 
 function showPaidReceipt(signature) {
   receiptContainer.classList.remove('hidden');
-  solscanLink.href = signature.startsWith('demo-')
-    ? 'https://solscan.io'
-    : `https://solscan.io/tx/${signature}`;
+  solscanLink.href = `https://solscan.io/tx/${signature}`;
   updatePayButtonState();
 }
 
