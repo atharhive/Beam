@@ -66,8 +66,16 @@ body {
 }
 
 .brand-logo {
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
   filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.6));
+}
+
+.brand-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: block;
 }
 
 .brand-name {
@@ -154,6 +162,142 @@ body {
   box-shadow: 0 0 8px var(--solana-green);
 }
 
+.wallet-menu-wrapper {
+  position: relative;
+}
+
+.wallet-chevron {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  color: var(--text-dim);
+  transition: transform 0.2s ease;
+}
+
+.wallet-chevron.open {
+  transform: rotate(180deg);
+}
+
+.wallet-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: #121422;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.15);
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wallet-dropdown.hidden {
+  display: none !important;
+}
+
+.wallet-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+
+.wallet-status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--solana-green);
+  box-shadow: 0 0 6px var(--solana-green);
+}
+
+.wallet-dropdown-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wallet-dropdown-address {
+  font-size: 0.78rem;
+  color: #fff;
+  word-break: break-all;
+  line-height: 1.35;
+}
+
+.wallet-dropdown-cluster {
+  font-size: 0.68rem;
+  color: var(--solana-green);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wallet-dropdown-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.wallet-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.wallet-dropdown-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.wallet-dropdown-btn.btn-disconnect {
+  color: #f87171;
+}
+
+.wallet-dropdown-btn.btn-disconnect:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.dropdown-icon {
+  font-size: 0.9rem;
+}
+
 /* Container */
 .container {
   max-width: 640px;
@@ -235,6 +379,19 @@ input:focus, select:focus {
 
 .input-with-action {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-action input {
+  padding-right: 145px !important;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  letter-spacing: -0.2px;
+}
+
+.input-with-action input:not(:focus) {
+  text-overflow: ellipsis;
 }
 
 .input-action-btn {
@@ -242,20 +399,24 @@ input:focus, select:focus {
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(99, 102, 241, 0.2);
+  background: #1e2238;
   color: #a5b4fc;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  padding: 0.45rem 0.85rem;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   transition: all 0.2s;
 }
 
 .input-action-btn:hover {
-  background: rgba(99, 102, 241, 0.35);
+  background: #2a2f52;
   color: #fff;
+  border-color: rgba(99, 102, 241, 0.7);
 }
 
 .input-currency {

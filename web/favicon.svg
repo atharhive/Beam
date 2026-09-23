@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" shape-rendering="crispEdges">
+  <defs>
+    <linearGradient id="bGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="7" fill="#0d101d" stroke="#262a42" stroke-width="1.5" shape-rendering="geometricPrecision" />
+  <rect x="7" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="13" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="16" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="7" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="10" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="10" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="10" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="10" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="13" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="13" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="13" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="13" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="16" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="16" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="13" y="16" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="16" y="16" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="16" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="19" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="19" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="19" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="19" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="22" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="22" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="22" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="22" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="7" y="25" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="10" y="25" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="13" y="25" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="16" y="25" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="19" y="25" width="3" height="3" fill="url(#bGrad)" />
+  <rect x="22" y="25" width="3" height="3" fill="url(#bGrad)" />
+</svg>

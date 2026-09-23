@@ -13,6 +13,12 @@ const checkoutView = document.getElementById('checkoutView');
 
 const connectWalletBtn = document.getElementById('connectWalletBtn');
 const walletLabel = document.getElementById('walletLabel');
+const walletChevron = document.getElementById('walletChevron');
+const walletDropdown = document.getElementById('walletDropdown');
+const walletDropdownAddress = document.getElementById('walletDropdownAddress');
+const copyWalletAddressBtn = document.getElementById('copyWalletAddressBtn');
+const copyWalletBtnText = document.getElementById('copyWalletBtnText');
+const disconnectWalletBtn = document.getElementById('disconnectWalletBtn');
 
 // Create View Elements
 const recipientWalletInput = document.getElementById('recipientWallet');
@@ -77,7 +83,32 @@ async function connectWallet() {
     const resp = await provider.connect();
     connectedWallet = resp.publicKey.toString();
     walletLabel.textContent = `${connectedWallet.slice(0, 4)}...${connectedWallet.slice(-4)}`;
+    if (walletDropdownAddress) {
+      walletDropdownAddress.textContent = connectedWallet;
+    }
     connectWalletBtn.classList.add('wallet-connected');
+    if (walletChevron) {
+      walletChevron.classList.remove('hidden');
+    }
+
+    // Attach provider event listeners if supported
+    if (provider.on && !provider._beamListenersBound) {
+      provider.on('disconnect', () => disconnectWallet());
+      provider.on('accountChanged', (publicKey) => {
+        if (publicKey) {
+          connectedWallet = publicKey.toString();
+          walletLabel.textContent = `${connectedWallet.slice(0, 4)}...${connectedWallet.slice(-4)}`;
+          if (walletDropdownAddress) {
+            walletDropdownAddress.textContent = connectedWallet;
+          }
+          refreshWalletBalances();
+          if (currentIntent) fetchQuote();
+        } else {
+          disconnectWallet();
+        }
+      });
+      provider._beamListenersBound = true;
+    }
 
     await refreshWalletBalances();
     updatePayButtonState();
@@ -90,7 +121,71 @@ async function connectWallet() {
   }
 }
 
-connectWalletBtn.addEventListener('click', connectWallet);
+async function disconnectWallet() {
+  const provider = window.solana || window.phantom?.solana;
+  if (provider && provider.disconnect) {
+    try {
+      await provider.disconnect();
+    } catch (err) {
+      console.warn('Provider disconnect error:', err);
+    }
+  }
+
+  connectedWallet = null;
+  walletLabel.textContent = 'Connect Wallet';
+  connectWalletBtn.classList.remove('wallet-connected');
+  if (walletChevron) {
+    walletChevron.classList.add('hidden');
+    walletChevron.classList.remove('open');
+  }
+  if (walletDropdown) {
+    walletDropdown.classList.add('hidden');
+  }
+  if (payerBalanceDisplay) {
+    payerBalanceDisplay.textContent = 'Balance: —';
+  }
+
+  updatePayButtonState();
+}
+
+connectWalletBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (connectedWallet) {
+    walletDropdown.classList.toggle('hidden');
+    walletChevron.classList.toggle('open');
+  } else {
+    connectWallet();
+  }
+});
+
+disconnectWalletBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  disconnectWallet();
+});
+
+copyWalletAddressBtn.addEventListener('click', async (e) => {
+  e.stopPropagation();
+  if (!connectedWallet) return;
+  try {
+    await navigator.clipboard.writeText(connectedWallet);
+    copyWalletBtnText.textContent = 'Copied!';
+    setTimeout(() => {
+      copyWalletBtnText.textContent = 'Copy Address';
+    }, 1500);
+  } catch (err) {
+    console.warn('Failed to copy address:', err);
+  }
+});
+
+// Close dropdown on outside click
+document.addEventListener('click', (e) => {
+  if (walletDropdown && !walletDropdown.classList.contains('hidden')) {
+    if (!e.target.closest('.wallet-menu-wrapper')) {
+      walletDropdown.classList.add('hidden');
+      if (walletChevron) walletChevron.classList.remove('open');
+    }
+  }
+});
 
 async function refreshWalletBalances() {
   if (!connectedWallet) return;

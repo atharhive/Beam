@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beam ⚡ — Pay with anything. Settle in USDC.</title>
+  <title>Beam</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,17 +16,43 @@
     <!-- Navbar -->
     <header class="navbar">
       <div class="brand">
-        <span class="brand-logo">⚡</span>
+        <span class="brand-logo">
+          <img src="/favicon.svg" alt="Beam" class="brand-logo-img">
+        </span>
         <span class="brand-name">Beam</span>
         <span class="badge-network">Devnet</span>
       </div>
       <div class="nav-actions">
         <button id="navCreateBtn" class="nav-btn active">Create Link</button>
         <button id="navCheckoutBtn" class="nav-btn">Payer Checkout</button>
-        <button id="connectWalletBtn" class="btn-wallet">
-          <span class="wallet-dot"></span>
-          <span id="walletLabel">Connect Wallet</span>
-        </button>
+        <div class="wallet-menu-wrapper">
+          <button id="connectWalletBtn" class="btn-wallet" type="button">
+            <span class="wallet-dot"></span>
+            <span id="walletLabel">Connect Wallet</span>
+            <span id="walletChevron" class="wallet-chevron hidden">▾</span>
+          </button>
+          
+          <div id="walletDropdown" class="wallet-dropdown hidden">
+            <div class="wallet-dropdown-header">
+              <span class="wallet-status-indicator"></span>
+              <span class="wallet-dropdown-title">Connected Account</span>
+            </div>
+            <div class="wallet-dropdown-card">
+              <div id="walletDropdownAddress" class="wallet-dropdown-address font-mono"></div>
+              <div class="wallet-dropdown-cluster">Devnet Cluster</div>
+            </div>
+            <div class="wallet-dropdown-actions">
+              <button id="copyWalletAddressBtn" class="wallet-dropdown-btn" type="button">
+                <span class="dropdown-icon">📋</span>
+                <span id="copyWalletBtnText">Copy Address</span>
+              </button>
+              <button id="disconnectWalletBtn" class="wallet-dropdown-btn btn-disconnect" type="button">
+                <span class="dropdown-icon">⏻</span>
+                <span>Disconnect</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -189,7 +217,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <div>Beam ⚡ Non-Custodial Solana Settlement Protocol</div>
+      <div>Beam — Non-Custodial Solana Settlement Protocol</div>
       <div>Built with Bun, Express & @solana/web3.js</div>
     </footer>
   </div>
