@@ -6,7 +6,7 @@
     "types": ["bun-types"],
     "lib": ["ESNext"],
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
